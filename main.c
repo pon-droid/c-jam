@@ -16,13 +16,18 @@ static unsigned char CELL_H = 64;
 #define PL_W (CELL_W/2)
 #define PL_H (CELL_H/2)
 
-#define PL_S 5
+#define PL_S .01
 
 #define GET_MAP(y, x) (MAP[y * MAP_W + x])
 
 int max(int x, int y){ if(x > y) { return x; } else { return y; } }
 int min(int x, int y){ if(x < y) { return x; } else { return y; } }
 
+typedef struct neighbour {
+  int x, y;
+} neighbour;
+
+//For other bitwise operations
 
 typedef struct tile {
   bool block;
@@ -30,8 +35,8 @@ typedef struct tile {
 } tile;
 
 typedef struct person {
-  int x, y;
-  int vx, vy;
+  float x, y;
+  float vx, vy;
 } person;
 
 typedef struct point {
@@ -41,6 +46,11 @@ typedef struct point {
 typedef struct camera {
   float x, y;
 } camera;
+
+bool in_map(int x, int y){
+  // return true;
+  return x < MAP_W && x >= 0 && y < MAP_H && y >= 0;
+}
 
 bool quit (void){
   SDL_Event event;
@@ -188,28 +198,65 @@ bool p_collide(tile MAP[], int x, int y){
   return false;
 }
 
-void update_player(person *player, SDL_Renderer *rend, tile map[], camera cam){
+bool t_collide(tile MAP[], int x, int y){
+
+  x = x/CELL_W;
+  y = y/CELL_H;
+
+
+  if(!in_map(x,y)){ return false; }
+
+  if(MAP[y * MAP_W + x].binary || MAP[y * MAP_W + x].block){ return false; }
+
+  return true;
+
+}
+
+  
+
+bool collide_man(tile MAP[], int x, int y){
+
+  
+  
+  return t_collide(MAP,x,y) || t_collide(MAP,x+PL_W,y) || t_collide(MAP,x+PL_W,y+PL_H) || t_collide(MAP,x,y+PL_H);
+
+}
+
+void draw_corn(person player, SDL_Renderer *rend, camera cam){
+  SDL_SetRenderDrawColor(rend,255,255,0,255);
+  SDL_Rect rct;
+  rct.h = 5;
+  rct.w = 5;
+
+  rct.x = player.x - cam.x;
+  rct.y = player.y - cam.y;
+
+  SDL_RenderFillRect(rend, &rct);
+
+}
+
+void update_player(person *player, SDL_Renderer *rend, tile MAP[], camera cam, int interval){
   SDL_SetRenderDrawColor(rend, 0, 0, 0, 255);
   SDL_Rect rect;
   rect.h = PL_H;
   rect.w = PL_W;
   
   const Uint8* keys = SDL_GetKeyboardState( NULL );
-  int up = player->y - PL_S;
-  int down = player->y + PL_S;
-  int right = player->x + PL_S;
-  int left = player->x - PL_S;
+  int up = player->y - (PL_S * interval);
+  int down = player->y + (PL_S * interval);
+  int right = player->x + (PL_S * interval);
+  int left = player->x - (PL_S * interval);
 
-  if( keys[SDL_SCANCODE_RIGHT]){// && !(p_collide(map,right,player->y))){
+  if( keys[SDL_SCANCODE_RIGHT] && (collide_man(MAP,right,player->y))){// && !(p_collide(map,right,player->y))){
     player->x = right;
   }
-  if( keys[SDL_SCANCODE_LEFT]){// && !(p_collide(map,left,player->y))){
+  if( keys[SDL_SCANCODE_LEFT] && (collide_man(MAP,left,player->y))){// && !(p_collide(map,left,player->y))){
     player->x = left;
   }
-  if( keys[SDL_SCANCODE_UP]){// && !(p_collide(map,player->x,up))){
+  if( keys[SDL_SCANCODE_UP] && (collide_man(MAP,player->x,up))){// && !(p_collide(map,player->x,up))){
     player->y = up;
   }
-  if( keys[SDL_SCANCODE_DOWN]){// && !(p_collide(map,player->x,down))){
+  if( keys[SDL_SCANCODE_DOWN] && (collide_man(MAP,player->x,down))){// && !(p_collide(map,player->x,down))){
     player->y = down;
   }
   
@@ -220,23 +267,90 @@ void update_player(person *player, SDL_Renderer *rend, tile map[], camera cam){
   SDL_RenderFillRect(rend, &rect);
 }
 
+void manage_player(person *player, tile MAP[], camera cam, SDL_Renderer *rend, int interval){
+  SDL_SetRenderDrawColor(rend,0,0,0,255);
+  SDL_Rect rect;
+  rect.h = PL_H;
+  rect.w = PL_W;
 
-void zoom(void){
+  const Uint8* keys = SDL_GetKeyboardState( NULL );
+  //Dont predict next position
+  if( keys[SDL_SCANCODE_RIGHT] ){
+    player->vx = (PL_S * interval);
+  }
+  if( keys[SDL_SCANCODE_LEFT] ){
+    player->vx = (PL_S * interval) * -1;
+  }
+  if( keys[SDL_SCANCODE_UP] ){
+    player->vy = (PL_S * interval) * -1;
+  }
+  if( keys[SDL_SCANCODE_DOWN] ){
+    player->vy = (PL_S * interval);
+  }
+
+  player->x += player->vx;
+  player->y += player->vy;
+
+  if(collide_man(MAP,player->x,player->y)) { player->x -= player->vx; player->y -= player->vy; }
+
+  rect.x = player->x - cam.x;
+  rect.y = player->y - cam.y;
+
+  player->vx = 0;
+  player->vy = 0;
+
+  SDL_RenderFillRect(rend, &rect);
+}
+  
+
+int x_zoom = 0;
+int y_zoom = 0;
+
+void zoom(SDL_Renderer *rend){
   const Uint8* keys = SDL_GetKeyboardState( NULL );
 
   if(keys[SDL_SCANCODE_0]){
-    CELL_W++;
-    CELL_H++;
+    x_zoom--;
+    y_zoom--;
   }
   if(keys[SDL_SCANCODE_1]){
-    CELL_W--;
-    CELL_H--;
+    x_zoom++;
+    y_zoom++;
   }
+
+
+  SDL_RenderSetLogicalSize(rend,x_zoom,y_zoom);
  
 }
     
 void print_coord(person player){
-  printf("X: %d, Y: %d\n",player.x/CELL_W, player.y/CELL_H);
+  printf("X: %f, Y: %f\n",player.x/CELL_W, player.y/CELL_H);
+}
+
+
+
+
+void mouse_edit(tile MAP[], camera cam, person player){
+  int x, y;
+  Uint32 mouse = SDL_GetMouseState(&x, &y);
+  //Translate screen position to array position
+  x = (x + cam.x)/CELL_W;
+  y = (y + cam.y)/CELL_H;
+  
+  if((mouse & SDL_BUTTON_LMASK) != 0 && in_map(x,y)){
+
+    MAP[y * MAP_W + x].binary = true;
+  }
+  if((mouse & SDL_BUTTON_RMASK) != 0 && in_map(x,y)){
+    MAP[y * MAP_W + x].binary = false;
+  }
+  if((mouse & SDL_BUTTON_X2MASK) != 0 && in_map(x,y)){
+    MAP[y * MAP_W + x].block = true;
+  }
+  if((mouse & SDL_BUTTON_X1MASK) != 0 && in_map(x,y)){
+    MAP[y * MAP_W + x].block = false;
+  }
+
 }
 
 int main (void){
@@ -255,7 +369,7 @@ int main (void){
   for( i = 0; i < MAP_W * MAP_H; i++){
     tile ntile;
     ntile.block = false;
-    if(i % 2 == 0){
+    if(i % 3 == 0){
       ntile.binary = true;
     } else {
       ntile.binary = false;
@@ -263,7 +377,11 @@ int main (void){
     MAP[i] = ntile;
   }
 
+  int last_time = 0;
+
   while(!quit()){
+    int elapsed = SDL_GetTicks();
+    
     cam.x = player.x - SCR_W/2;
     cam.y = player.y - SCR_H/2;
     
@@ -273,11 +391,15 @@ int main (void){
     //draw_map(MAP, rend);
     // scroll_draw_map(MAP, rend, camera);
     // clamp_cam(&camera);
-    update_player(&player, rend, MAP, cam);
-    zoom();
-    //print_coord(player);
+    int interval = elapsed - last_time;
+    //update_player(&player, rend, MAP, cam, interval);
+    manage_player(&player, MAP, cam, rend, interval);
+    draw_corn(player,rend,cam);
+    mouse_edit(MAP,cam,player);
     //cam_handler(&cam);
     SDL_RenderPresent(rend);
+    
+    last_time = elapsed;
   }
 
 
