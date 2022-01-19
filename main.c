@@ -16,8 +16,8 @@ static unsigned char CELL_H = 64;
 #define PL_W (CELL_W/2)
 #define PL_H (CELL_H/2)
 
-#define PL_S .01
-
+#define PL_S .1
+#define GRAV .4
 #define GET_MAP(y, x) (MAP[y * MAP_W + x])
 
 int max(int x, int y){ if(x > y) { return x; } else { return y; } }
@@ -37,6 +37,7 @@ typedef struct tile {
 typedef struct person {
   float x, y;
   float vx, vy;
+  bool jumped;
 } person;
 
 typedef struct point {
@@ -267,6 +268,11 @@ void update_player(person *player, SDL_Renderer *rend, tile MAP[], camera cam, i
   SDL_RenderFillRect(rend, &rect);
 }
 
+bool on_ground(person *player, tile MAP[]){
+  //Add one, because when on ground we are not colliding, so check if block underneath is collidable
+  return t_collide(MAP,player->x,player->y+PL_H + 4) || t_collide(MAP,player->x+PL_W,player->y+PL_H + 4);
+}
+
 void manage_player(person *player, tile MAP[], camera cam, SDL_Renderer *rend, int interval){
   SDL_SetRenderDrawColor(rend,0,0,0,255);
   SDL_Rect rect;
@@ -281,25 +287,43 @@ void manage_player(person *player, tile MAP[], camera cam, SDL_Renderer *rend, i
   if( keys[SDL_SCANCODE_LEFT] ){
     player->vx = (PL_S * interval) * -1;
   }
-  if( keys[SDL_SCANCODE_UP] ){
-    player->vy = (PL_S * interval) * -1;
+  if( keys[SDL_SCANCODE_UP]){
+    player->vy = (PL_S * 2 * interval) * -1;
+    player->jumped = true;
   }
+  
   if( keys[SDL_SCANCODE_DOWN] ){
     player->vy = (PL_S * interval);
   }
+  
+  //Refactoring movement velocity based yeah?
+  if(on_ground(player,MAP)) { SDL_SetRenderDrawColor(rend,255,255,255,255); player->jumped = false; }
 
+  
+  // if(!on_ground(player,MAP)) { player->vy += GRAV * interval; }
+    //Update
   player->x += player->vx;
+
+  if(collide_man(MAP,player->x,player->y)) { player->x -= player->vx; }
+  
   player->y += player->vy;
-
-  if(collide_man(MAP,player->x,player->y)) { player->x -= player->vx; player->y -= player->vy; }
-
+  /*
+  if(collide_man(MAP,player->x,player->y)) {
+    int tmp = player->y/CELL_H;
+    int snap = player->y*CELL_H;
+    player->y = snap;
+    player->vy = 0;
+    
+  }  
+  */
   rect.x = player->x - cam.x;
   rect.y = player->y - cam.y;
-
-  player->vx = 0;
-  player->vy = 0;
-
+  
   SDL_RenderFillRect(rend, &rect);
+
+  player->vy = 0;
+  player->vx = 0;
+ 
 }
   
 
@@ -361,6 +385,9 @@ int main (void){
   person player;
   player.x = SCR_W/2;
   player.y = SCR_H/2;
+  player.vx = 0;
+  player.vy = 0;
+  player.jumped = false;
   camera cam;
   
 
@@ -369,7 +396,7 @@ int main (void){
   for( i = 0; i < MAP_W * MAP_H; i++){
     tile ntile;
     ntile.block = false;
-    if(i % 3 == 0){
+    if(i % 2 == 0){
       ntile.binary = true;
     } else {
       ntile.binary = false;
@@ -394,7 +421,6 @@ int main (void){
     int interval = elapsed - last_time;
     //update_player(&player, rend, MAP, cam, interval);
     manage_player(&player, MAP, cam, rend, interval);
-    draw_corn(player,rend,cam);
     mouse_edit(MAP,cam,player);
     //cam_handler(&cam);
     SDL_RenderPresent(rend);
