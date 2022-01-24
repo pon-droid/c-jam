@@ -1,5 +1,7 @@
 #pragma once
+
 #include<stdbool.h>
+#include<SDL2/SDL.h>
 #include "map.h"
 
 #define PL_W (CELL_W/2)
@@ -12,62 +14,16 @@ typedef struct person {
   float vx, vy;
 } person;
 
-bool collide_man(tile MAP[], int x, int y, int w, int h){ 
-  return collide(MAP,x,y) || collide(MAP,x+w,y) || collide(MAP,x+w,y+h) || collide(MAP,x,y+h);
-}
+bool in_map(int x, int y);
 
-bool on_ground(person *player, tile MAP[]){
-  //Add one, because when on ground we are not colliding, so check if block underneath is collidable
-  return collide(MAP,player->x,player->y+PL_H + 4) || collide(MAP,player->x+PL_W,player->y+PL_H + 4);
-}
+bool collide(tile MAP[], int x, int y);
 
-void manage_player(person *player, tile MAP[], camera cam, SDL_Renderer *rend, int interval){
-  SDL_SetRenderDrawColor(rend,0,0,0,255);
-  SDL_Rect rect;
-  rect.h = PL_H;
-  rect.w = PL_W;
+bool collide_man(tile MAP[], int x, int y, int w, int h);
 
-  const Uint8* keys = SDL_GetKeyboardState( NULL );
-  //Dont predict next position
-  if( keys[SDL_SCANCODE_RIGHT] ){
-    player->vx = (PL_S * interval);
-  }
-  if( keys[SDL_SCANCODE_LEFT] ){
-    player->vx = (PL_S * interval) * -1;
-  }
-  if( keys[SDL_SCANCODE_UP] ){
-    player->vy = (PL_S * interval) * -1;
-  }
-  if( keys[SDL_SCANCODE_DOWN] ){
-    player->vy = (PL_S * interval);
-  }
+bool on_ground(person *player, tile MAP[]);
 
-  player->x += player->vx;
-  player->y += player->vy;
+void manage_player(person *player, tile MAP[], int interval);
 
-  if(collide_man(MAP,player->x,player->y,rect.w,rect.h)) { player->x -= player->vx; player->y -= player->vy; }
+person read_player_pos(void);
 
-  rect.x = player->x - cam.x;
-  rect.y = player->y - cam.y;
-
-  player->vx = 0;
-  player->vy = 0;
-
-
-  SDL_RenderFillRect(rend, &rect);
-  /*
-  if(collide_man(MAP,player->x,player->y)) {
-    int tmp = player->y/CELL_H;
-    int snap = player->y*CELL_H;
-    player->y = snap;
-    player->vy = 0;
-    
-  }  
-  */
- 
-}
-
-void set_cam(camera *cam, person *player){
-  cam->x = player->x - SCR_W/2;
-  cam->y = player->y - SCR_H/2;
-}
+void save_player_pos(person player);

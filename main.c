@@ -1,6 +1,7 @@
 #include <stdbool.h>
 #include "cam.h"
 #include "player.h"
+#include "rend.h"
 
 bool quit (void){
   SDL_Event event;
@@ -36,17 +37,48 @@ void mouse_edit(tile MAP[], camera cam, person player){
 
 }
 
-int main(void){
-  SDL_Window* win = SDL_CreateWindow("bit newwise", 0, 0, SCR_W, SCR_H, SDL_WINDOW_RESIZABLE);
-  SDL_Renderer* rend = SDL_CreateRenderer(win, -1, SDL_RENDERER_PRESENTVSYNC);
+
+
+void make_friends(tile MAP[], camera cam){
+  int x, y;
+  Uint32 mouse = SDL_GetMouseState(&x,&y);
+
+  x = (x + cam.x)/CELL_W;
+  y = (y + cam.y)/CELL_H;
+  
+  if((mouse & SDL_BUTTON_LMASK) != 0 && in_map(x,y)){
+    MAP[y * MAP_W + x].friend = WANT_FRIEND;
+  }
+  if((mouse & SDL_BUTTON_RMASK) != 0 && in_map(x,y)){
+    int i;
+    for( i = 0; i < MAP_W * MAP_H; i++){
+      if(MAP[i].friend == WANT_FRIEND){
+        MAP[y * MAP_W + x].friend = i;
+        MAP[i].friend = y * MAP_W + x;
+        return;
+      }
+    }
+  }
+}
+
+
+
+
+
+
+int main(int argc, char* argv[]){
+  SDL_Window* win = SDL_CreateWindow("bit newwise", 0, 0, SCR_W, SCR_H, SDL_WINDOW_SHOWN);
+  SDL_Renderer* rend = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED);
 
   tile MAP[MAP_W * MAP_H];
-  diag(MAP);
+  read_map(MAP);
   
-  person player = { SCR_W/2, SCR_H/2, 0, 0};
+  person player = read_player_pos();
   camera cam;
   
   int last_time = 0;
+  
+
   while(!quit()){
     int elapsed = SDL_GetTicks();
     set_cam(&cam, &player);
@@ -56,10 +88,11 @@ int main(void){
 
     int interval = elapsed - last_time;
     draw_map(MAP,rend,cam);
-    manage_player(&player,MAP,cam,rend,interval);
-
-    mouse_edit(MAP,cam,player);
-
+    manage_player(&player,MAP,interval);
+    draw_player(rend,player,cam);
+    //mouse_edit(MAP,cam,player);
+    make_friends(MAP,cam);
+    draw_friends(rend,MAP,cam);
     SDL_RenderPresent(rend);
 
     last_time = elapsed;
@@ -69,6 +102,7 @@ int main(void){
   SDL_DestroyRenderer(rend);
   SDL_DestroyWindow(win);
   save_map(MAP);
+  save_player_pos(player);
 
 
   return 0;
