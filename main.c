@@ -61,10 +61,77 @@ void make_friends(tile MAP[], camera cam){
   }
 }
 
+void print_friend(tile MAP[], camera cam){
+  int x, y;
+  Uint32 mouse = SDL_GetMouseState(&x,&y);
 
+  x = (x + cam.x)/CELL_W;
+  y = (y + cam.y)/CELL_H;
 
+  if(in_map(x,y)){
+    printf("friend: %d\n",MAP[y * MAP_W + x].friend);
+    printf("Bit: %d\n", MAP[y * MAP_W + x].state);
+  }
+}
 
+void bitwise_NOT(tile MAP[]){
+  printf("Work\n");
+	int i;
+	for( i = 0; i < MAP_W * MAP_H; i++){
+		if(MAP[i].friend != NO_FRIEND && MAP[i].friend != WANT_FRIEND){
+      int tmp = MAP[i].state;
+      MAP[i].state = MAP[MAP[i].friend].state;
+      MAP[MAP[i].friend].state = tmp;
+      return;
+		}
+	}
+}
 
+int return_max(int x, int y){
+  if(x > y){
+    return x;
+  } else {
+    return y;
+  }
+}
+
+void recursive_NOT(tile MAP[], int start){
+  int i;
+  for( i = start; i < MAP_W * MAP_H; i++){
+    if(MAP[i].friend != NO_FRIEND && MAP[i].friend != WANT_FRIEND){
+      int tmp = MAP[i].state;
+      MAP[i].state = MAP[MAP[i].friend].state;
+      MAP[MAP[i].friend].state = tmp;
+      recursive_NOT(MAP,return_max(i,MAP[i].friend) + 1);
+      return;
+		}
+  }
+}
+
+void reg_NOT(tile MAP[]){
+  int i;
+  for( i = 0; i < MAP_W * MAP_H; i++){
+    if(MAP[i].state == BINARY_ON){
+      MAP[i].state = BINARY_OFF;
+      continue;
+    }
+    if(MAP[i].state == BINARY_OFF){
+      MAP[i].state = BINARY_ON;
+      continue;
+    }
+  }
+}
+void control_bitNOT(tile MAP[]){
+	const Uint8* keys = SDL_GetKeyboardState( NULL );
+
+	if(keys[SDL_SCANCODE_PAGEUP]){
+		//reg_NOT(MAP);
+    recursive_NOT(MAP, 0);
+    SDL_Delay(200);
+    return;
+	}
+
+}
 
 int main(int argc, char* argv[]){
   SDL_Window* win = SDL_CreateWindow("bit newwise", 0, 0, SCR_W, SCR_H, SDL_WINDOW_SHOWN);
@@ -90,9 +157,11 @@ int main(int argc, char* argv[]){
     draw_map(MAP,rend,cam);
     manage_player(&player,MAP,interval);
     draw_player(rend,player,cam);
-    //mouse_edit(MAP,cam,player);
+    mouse_edit(MAP,cam,player);
+    print_friend(MAP,cam);
+    control_bitNOT(MAP);
     make_friends(MAP,cam);
-    draw_friends(rend,MAP,cam);
+    //draw_friends(rend,MAP,cam);
     SDL_RenderPresent(rend);
 
     last_time = elapsed;

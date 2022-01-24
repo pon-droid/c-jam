@@ -22,8 +22,8 @@ void draw_map(tile MAP[], SDL_Renderer *rend, camera cam){
       if(tmp.state == BLOCK){ SDL_SetRenderDrawColor(rend, 0, 0, 255, 255); }
       if(tmp.state == BINARY_ON){ SDL_SetRenderDrawColor(rend, 0, 255, 0, 255); }
       if(tmp.state == BINARY_OFF){ SDL_SetRenderDrawColor(rend, 255, 0, 0, 255); }
-      if(tmp.friend != NO_FRIEND) { SDL_SetRenderDrawColor(rend,255,255,255,255);}
-      if(tmp.friend == WANT_FRIEND ) { SDL_SetRenderDrawColor(rend,0,0,0,255); }
+      //if(tmp.friend != NO_FRIEND) { SDL_SetRenderDrawColor(rend,255,255,255,255);}
+      //if(tmp.friend == WANT_FRIEND ) { SDL_SetRenderDrawColor(rend,0,0,0,255); }
       rect.x = (x * CELL_W) - cam.x;
       rect.y = (y * CELL_H) - cam.y;
       
