@@ -16,6 +16,8 @@ enum friend_state { NO_FRIEND = -1, WANT_FRIEND = -2, HAS_FRIEND = -3 };
 typedef struct tile {
   int friend;
   int state;
+  int x;
+  int y;
 } tile;
 
 void save_map(tile MAP[]);

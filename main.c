@@ -3,6 +3,7 @@
 #include "player.h"
 #include "rend.h"
 
+
 bool quit (void){
   SDL_Event event;
   while(SDL_PollEvent(&event)){
@@ -70,7 +71,8 @@ void print_friend(tile MAP[], camera cam){
 
   if(in_map(x,y)){
     printf("friend: %d\n",MAP[y * MAP_W + x].friend);
-    printf("Bit: %d\n", MAP[y * MAP_W + x].state);
+    printf("X: %d Y: %d\n",MAP[y * MAP_W + x].x, MAP[y * MAP_W + x].y);
+    //printf("Bit: %d\n", MAP[y * MAP_W + x].state);
   }
 }
 
@@ -87,13 +89,6 @@ void bitwise_NOT(tile MAP[]){
 	}
 }
 
-int return_max(int x, int y){
-  if(x > y){
-    return x;
-  } else {
-    return y;
-  }
-}
 
 void recursive_NOT(tile MAP[], int start){
   int i;
@@ -102,6 +97,7 @@ void recursive_NOT(tile MAP[], int start){
       int tmp = MAP[i].state;
       MAP[i].state = MAP[MAP[i].friend].state;
       MAP[MAP[i].friend].state = tmp;
+      //Ensure we don't do a tangled swap, no cheating
       recursive_NOT(MAP,return_max(i,MAP[i].friend) + 1);
       return;
 		}
@@ -150,7 +146,7 @@ int main(int argc, char* argv[]){
     int elapsed = SDL_GetTicks();
     set_cam(&cam, &player);
 
-    SDL_SetRenderDrawColor(rend, 255, 255, 255, 255);
+    SDL_SetRenderDrawColor(rend, 0, 0, 0, 255);
     SDL_RenderClear(rend);
 
     int interval = elapsed - last_time;
@@ -161,7 +157,7 @@ int main(int argc, char* argv[]){
     print_friend(MAP,cam);
     control_bitNOT(MAP);
     make_friends(MAP,cam);
-    //draw_friends(rend,MAP,cam);
+    draw_friends(rend,MAP,cam, 0);
     SDL_RenderPresent(rend);
 
     last_time = elapsed;

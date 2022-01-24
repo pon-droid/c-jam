@@ -18,6 +18,8 @@ void draw_map(tile MAP[], SDL_Renderer *rend, camera cam){
   for( y = 0; y < MAP_H; y++){
     for( x = 0; x < MAP_W; x++){
       tmp = GET_MAP(y, x);
+      GET_MAP(y,x).x = x;
+      GET_MAP(y,x).y = y;
 
       if(tmp.state == BLOCK){ SDL_SetRenderDrawColor(rend, 0, 0, 255, 255); }
       if(tmp.state == BINARY_ON){ SDL_SetRenderDrawColor(rend, 0, 255, 0, 255); }
@@ -32,40 +34,31 @@ void draw_map(tile MAP[], SDL_Renderer *rend, camera cam){
   }
 }
 
-SDL_Point derive_coords(int relation){
-	int x, y;
-
-	for ( y = 0; y < MAP_H; y++){
-		for( x = 0; x < MAP_W; x++){
-			if((y*MAP_W+x) == relation){
-				SDL_Point tmp;
-				tmp.x = x;
-				tmp.y = y;
-				return tmp;
-			}
-		}
-	}
+int return_max(int x, int y){
+  if(x > y){
+    return x;
+  } else {
+    return y;
+  }
 }
 
-void draw_friends(SDL_Renderer *rend, tile MAP[], camera cam){
-  int x,y;
+void draw_friends(SDL_Renderer *rend, tile MAP[], camera cam, int start){
 
-  for( y = 0; y < MAP_H; y++){
-    for( x = 0; x < MAP_W; x++){
-      int relation = MAP[y * MAP_W + x].friend;
-      if(MAP[y * MAP_W + x].friend != NO_FRIEND && MAP[y * MAP_W + x].friend != WANT_FRIEND){
-        // solve this algebra y * MAP_W + x = something or record x and y coords
-        SDL_Point point = derive_coords(relation);
-        int dx1, dx2, dy1, dy2;
-        dx1 = x;
-        dx2 = point.x;
-        dy1 = y;
-        dy2 = point.y;
+  SDL_SetRenderDrawColor(rend,255,255,255,255);
+  int i;
+  for( i = start; i < MAP_W * MAP_H; i++){
+    if(MAP[i].friend != NO_FRIEND && MAP[i].friend != WANT_FRIEND){
+      int x1,x2,y1,y2;
+      //Center coords
+      x1 = MAP[i].x * CELL_W + CELL_W/2;
+      x2 = MAP[MAP[i].friend].x * CELL_W + CELL_W/2;
+      y1 = MAP[i].y * CELL_H + CELL_H/2;
+      y2 = MAP[MAP[i].friend].y * CELL_H + CELL_H/2;
 
-        SDL_SetRenderDrawColor(rend,255,0,0,255);
+      SDL_RenderDrawLine(rend,x1 - cam.x,y1 - cam.y,x2 - cam.x,y2 - cam.y);
+      draw_friends(rend,MAP,cam,return_max(i,MAP[i].friend) + 1);
+      return;
 
-        SDL_RenderDrawLine(rend,dx1 - cam.x,dy1 - cam.y,dx2 - cam.x,dy2 - cam.y);
-      }
     }
   }
 }
