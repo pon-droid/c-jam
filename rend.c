@@ -6,12 +6,36 @@ void set_cam(camera *cam, person *player){
   cam->y = player->y - SCR_H/2;
 }
 
-void draw_map(tile MAP[], SDL_Renderer *rend, camera cam){
+SDL_Texture* get_texture(SDL_Renderer *rend, char* img){
+	SDL_Surface *surf = IMG_Load(img);
+	if(surf == NULL) { printf("Cannot load image, %s", IMG_GetError()); return NULL;}
+
+	SDL_Texture *text = SDL_CreateTextureFromSurface(rend,surf);
+	SDL_FreeSurface(surf);
+
+	return text;
+}
+
+void populate_textures(SDL_Renderer *rend, SDL_Texture *arr[]){
+	arr[0] = get_texture(rend,"bin_off.png");
+	arr[1] = get_texture(rend, "bin_on.png");
+	arr[2] = get_texture(rend, "block.png");
+	arr[3] = get_texture(rend, "player.png");
+}
+
+
+void draw_map(tile MAP[], SDL_Renderer *rend, camera cam, SDL_Texture *text[]){
   SDL_Rect rect;
   rect.h = CELL_H;
   rect.w = CELL_W;
 
   tile tmp;
+
+  SDL_Rect src;
+  src.x = 0;
+  src.y = 0;
+  src.w = 64;
+  src.h = 64;
 
   int y, x;
 
@@ -21,15 +45,18 @@ void draw_map(tile MAP[], SDL_Renderer *rend, camera cam){
       GET_MAP(y,x).x = x;
       GET_MAP(y,x).y = y;
 
-      if(tmp.state == BLOCK){ SDL_SetRenderDrawColor(rend, 0, 0, 255, 255); }
-      if(tmp.state == BINARY_ON){ SDL_SetRenderDrawColor(rend, 0, 255, 0, 255); }
-      if(tmp.state == BINARY_OFF){ SDL_SetRenderDrawColor(rend, 255, 0, 0, 255); }
-      //if(tmp.friend != NO_FRIEND) { SDL_SetRenderDrawColor(rend,255,255,255,255);}
-      //if(tmp.friend == WANT_FRIEND ) { SDL_SetRenderDrawColor(rend,0,0,0,255); }
+      
       rect.x = (x * CELL_W) - cam.x;
       rect.y = (y * CELL_H) - cam.y;
-      
-      SDL_RenderFillRect(rend, &rect);
+
+      if(tmp.state == BLOCK){ SDL_RenderCopy(rend,text[2],&src,&rect); continue; }
+      if(tmp.state == BINARY_ON){ SDL_RenderCopy(rend,text[1],&src,&rect); continue; }
+      if(tmp.state == BINARY_OFF){ SDL_RenderCopy(rend,text[0],&src,&rect); continue; }
+      //if(tmp.friend != NO_FRIEND) { SDL_SetRenderDrawColor(rend,255,255,255,255);}
+      //if(tmp.friend == WANT_FRIEND ) { SDL_SetRenderDrawColor(rend,0,0,0,255); }
+
+     // SDL_RenderCopy(rend,texture,&src, &rect);
+      // SDL_RenderFillRect(rend, &rect);
     }
   }
 }
@@ -63,15 +90,30 @@ void draw_friends(SDL_Renderer *rend, tile MAP[], camera cam, int start){
   }
 }
 
-void draw_player(SDL_Renderer *rend, person player, camera cam){
+void draw_player(SDL_Renderer *rend, person player, camera cam, SDL_Texture *buffer[]){
+
+    SDL_Rect src;
+    src.x = 0;
+    src.y = 0;
+    src.w = 32;
+    src.h = 32;
+    
     SDL_Rect tmp;
     tmp.h = PL_H;
     tmp.w = PL_W;
     tmp.x = player.x - cam.x;
     tmp.y = player.y - cam.y;
 
-    SDL_SetRenderDrawColor(rend,0,50,58,255);
+    SDL_RenderCopy(rend,buffer[3],&src,&tmp);
+    //SDL_SetRenderDrawColor(rend,0,50,58,255);
 
-    SDL_RenderFillRect(rend, &tmp);
+    //SDL_RenderFillRect(rend, &tmp);
 
+}
+
+void cleanup_textures(SDL_Texture *buffer[]){
+	int i;
+	for( i = 0; i < BUFFER_COUNT; i++){
+		SDL_DestroyTexture(buffer[i]);
+	}
 }
