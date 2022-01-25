@@ -1,4 +1,5 @@
 #include <stdbool.h>
+#include <math.h>
 #include "cam.h"
 #include "player.h"
 #include "rend.h"
@@ -85,10 +86,10 @@ int main(int argc, char* argv[]){
     manage_player(&player,MAP,interval);
     draw_player(rend,player,cam, buffer);
     
-    //mouse_edit(MAP,cam,player);
+    mouse_edit(MAP,cam);
     
     control_bitwise(MAP);
-    make_friends(MAP,cam);
+    //make_friends(MAP,cam);
     draw_friends(rend,MAP,cam, 0);
     
     SDL_RenderPresent(rend);

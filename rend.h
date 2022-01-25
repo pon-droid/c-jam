@@ -5,6 +5,7 @@
 #include "map.h"
 #include "player.h"
 #include "cam.h"
+#include "util.h"
 
 
 #define BUFFER_COUNT 4

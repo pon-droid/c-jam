@@ -61,13 +61,6 @@ void draw_map(tile MAP[], SDL_Renderer *rend, camera cam, SDL_Texture *text[]){
   }
 }
 
-int return_max(int x, int y){
-  if(x > y){
-    return x;
-  } else {
-    return y;
-  }
-}
 
 void draw_friends(SDL_Renderer *rend, tile MAP[], camera cam, int start){
 

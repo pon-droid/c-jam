@@ -6,9 +6,9 @@
 
 #define PL_W (CELL_W/2)
 #define PL_H (CELL_H/2)
-#define PL_S .1
-#define GRAV .4
-
+#define PL_S .8
+#define GRAV .00004
+#define FRICT .09
 typedef struct person {
   float x, y;
   float vx, vy;

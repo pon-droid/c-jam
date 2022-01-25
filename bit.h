@@ -2,6 +2,7 @@
 #include "cam.h"
 #include "map.h"
 #include "rend.h"
+#include "util.h"
 //For return_max;
 
 void bitwise_not(tile MAP[], int start);

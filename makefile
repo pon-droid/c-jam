@@ -1,4 +1,4 @@
-FILES=main.c map.c player.c rend.c bit.c
+FILES=main.c map.c player.c rend.c bit.c util.c
 PKGS=sdl2 SDL2_image
 CFLAGS=-Wall -Wextra -pedantic -std=c99 `pkg-config --cflags $(PKGS)`
 CRFLAGS=-Wall -Wextra -pedantic -O2 -std=c99  `pkg-config --cflags --static $(PKGS)`

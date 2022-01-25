@@ -4,9 +4,11 @@ person read_player_pos(void){
   FILE *in;
 
   in = fopen("player.dat","r");
+  
+  if(in == NULL) { person player = {MAP_W/2*CELL_W,MAP_H/2*CELL_H,0,0}; printf("No player data! \n"); return player;}
+  
   person player;
-  if(in == NULL) { player.x = MAP_W/2*CELL_W; player.y = MAP_H/2*CELL_H; printf("No player data! \n"); return player;}
-
+  
   fread(&player, sizeof(person), 1, in);
   fclose(in);
   return player;
@@ -54,38 +56,34 @@ bool on_ground(person *player, tile MAP[]){
 
 void manage_player(person *player, tile MAP[], int interval){
 
+  float x = player->x;
+  float y = player->y;
+
   const Uint8* keys = SDL_GetKeyboardState( NULL );
   //Dont predict next position
   if( keys[SDL_SCANCODE_RIGHT] ){
-    player->vx = (PL_S * interval);
+    player->vx += (PL_S * interval);
   }
   if( keys[SDL_SCANCODE_LEFT] ){
-    player->vx = (PL_S * interval) * -1;
+    player->vx -= (PL_S * interval);
   }
-  if( keys[SDL_SCANCODE_UP] ){
-    player->vy = (PL_S * interval) * -1;
+  if( keys[SDL_SCANCODE_UP] && on_ground(player,MAP) ){
+    player->vy = (.02 * interval) * -2;
   }
+  /*
   if( keys[SDL_SCANCODE_DOWN] ){
     player->vy = (PL_S * interval);
   }
+  */
+
+  player->vy += GRAV * interval;
+  player->vx *= FRICT * interval;
 
   player->x += player->vx;
+  if(collide_man(MAP,player->x,player->y,PL_W,PL_H)) { player->x = x;}
   player->y += player->vy;
-
-  if(collide_man(MAP,player->x,player->y,PL_W,PL_H)) { player->x -= player->vx; player->y -= player->vy; }
-
-
-  player->vx = 0;
-  player->vy = 0;
-  /*
-  Snap to last block, better collision response then subtracting velocity
-  if(collide_man(MAP,player->x,player->y)) {
-    int tmp = player->y/CELL_H;
-    int snap = player->y*CELL_H;
-    player->y = snap;
-    player->vy = 0;
-    
-  }  
-  */
+  if(collide_man(MAP,player->x,player->y,PL_W,PL_H)) { player->y = y;}
+  
+ // if(collide_man(MAP,player->x,player->y,PL_W,PL_H)) { player->x -= player->vx; player->y -= player->vy; } 
  
 }
