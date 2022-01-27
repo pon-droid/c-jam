@@ -48,3 +48,10 @@ void make_friends(tile MAP[], camera cam){
     }
   }
 }
+
+void depression(tile MAP[]){
+	int i;
+	for( i = 0; i < MAP_W * MAP_H; i++){
+		MAP[i].friend = NO_FRIEND;
+	}
+}

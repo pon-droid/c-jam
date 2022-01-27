@@ -1,5 +1,7 @@
 #include "map.h"
 
+
+
 void save_map(tile MAP[]){
   FILE *out;
 
@@ -21,7 +23,7 @@ void diag(tile MAP[]){
   
     for( i = 0; i < MAP_W * MAP_H; i++){
     tile tmp;
-    if(i % 3 == 0){
+    if(i % 4 == 0){
       tmp.state = BINARY_ON;
     } else {
       tmp.state = BINARY_OFF;

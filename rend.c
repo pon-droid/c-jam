@@ -34,8 +34,8 @@ void draw_map(tile MAP[], SDL_Renderer *rend, camera cam, SDL_Texture *text[]){
   SDL_Rect src;
   src.x = 0;
   src.y = 0;
-  src.w = 64;
-  src.h = 64;
+  src.w = 16;
+  src.h = 16;
 
   int y, x;
 
@@ -88,8 +88,8 @@ void draw_player(SDL_Renderer *rend, person player, camera cam, SDL_Texture *buf
     SDL_Rect src;
     src.x = 0;
     src.y = 0;
-    src.w = 32;
-    src.h = 32;
+    src.w = 16;
+    src.h = 16;
     
     SDL_Rect tmp;
     tmp.h = PL_H;
